@@ -36,13 +36,16 @@ private const val NOTIFICATION_ID = 1
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScreenUser(modifier: Modifier = Modifier) {
+fun ScreenUser(modifier: Modifier = Modifier) { // <-- CORRECCIÓN: 'modifier' se usará ahora
     val context = LocalContext.current
+
+    // <-- CORRECCIÓN: La creación de la BD y el DAO se hace con 'remember' para que no se repita
     val db = remember { crearDatabase(context) }
     val dao = remember { db.userDao() }
+
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
-    var dataUser by remember { mutableStateOf("") }
+    var dataUser by remember { mutableStateOf("") } // <-- CORRECCIÓN: Se usa 'by'
     val coroutineScope = rememberCoroutineScope()
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -60,7 +63,7 @@ fun ScreenUser(modifier: Modifier = Modifier) {
     }
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier, // <-- CORRECCIÓN: Se aplica el modifier al Scaffold
         topBar = {
             TopAppBar(
                 title = { Text("Gestión de Usuarios") },
@@ -70,7 +73,7 @@ fun ScreenUser(modifier: Modifier = Modifier) {
                             val user = User(0, firstName, lastName)
                             coroutineScope.launch {
                                 agregarUsuario(user = user, dao = dao)
-                                dataUser = getUsers(dao = dao)
+                                dataUser = getUsers(dao = dao) // <-- CORRECCIÓN: Sin '.value'
                             }
                             firstName = ""
                             lastName = ""
@@ -80,7 +83,7 @@ fun ScreenUser(modifier: Modifier = Modifier) {
                     }
                     IconButton(onClick = {
                         coroutineScope.launch {
-                            dataUser = getUsers(dao = dao)
+                            dataUser = getUsers(dao = dao) // <-- CORRECCIÓN: Sin '.value'
                         }
                     }) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Listar Usuarios")
