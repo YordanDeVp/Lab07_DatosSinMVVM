@@ -104,7 +104,6 @@ fun ScreenUser(modifier: Modifier = Modifier) {
             Text("Eliminar Último Usuario", fontSize = 16.sp)
         }
 
-        // CORRECCIÓN: Se mantiene un solo Text para mostrar la lista de usuarios al final
         Text(
             text = dataUser.value, fontSize = 20.sp
         )
