@@ -25,13 +25,13 @@ import com.example.datossinmvvm.UserDatabase
 import kotlinx.coroutines.launch
 
 @Composable
-fun ScreenUser(modifier:Modifier = Modifier) {
+fun ScreenUser(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var db: UserDatabase
-    var id        by remember { mutableStateOf("") }
+    var id by remember { mutableStateOf("") }
     var firstName by remember { mutableStateOf("") }
-    var lastName  by remember { mutableStateOf("") }
-    var dataUser  = remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var dataUser = remember { mutableStateOf("") }
 
     db = crearDatabase(context)
 
@@ -43,7 +43,7 @@ fun ScreenUser(modifier:Modifier = Modifier) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-    ){
+    ) {
         Spacer(Modifier.height(50.dp))
         TextField(
             value = id,
@@ -64,34 +64,54 @@ fun ScreenUser(modifier:Modifier = Modifier) {
             label = { Text("Last Name:") },
             singleLine = true
         )
+        //Boton Agregar Usuario
         Button(
             onClick = {
                 val user = User(0, firstName, lastName)
                 coroutineScope.launch {
                     AgregarUsuario(user = user, dao = dao)
+                    // MEJORA: Refresca la lista después de agregar
+                    dataUser.value = getUsers(dao = dao)
                 }
                 firstName = ""
                 lastName = ""
             }
         ) {
-            Text("Agregar Usuario", fontSize=16.sp)
+            Text("Agregar Usuario", fontSize = 16.sp)
         }
+        //Button Lista Usuarios
         Button(
             onClick = {
-                val user = User(0,firstName, lastName)
                 coroutineScope.launch {
-                    val data = getUsers( dao = dao)
+                    val data = getUsers(dao = dao)
                     dataUser.value = data
                 }
             }
         ) {
-            Text("Listar Usuarios", fontSize=16.sp)
+            Text("Listar Usuarios", fontSize = 16.sp)
         }
+
+        // --Boton Eliminar--
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    EliminarUltimoUsuario(dao = dao)
+                    // Refresca la lista después de eliminar
+                    dataUser.value = getUsers(dao = dao)
+                }
+            }
+        ) {
+            Text("Eliminar Último Usuario", fontSize = 16.sp)
+        }
+
+        // CORRECCIÓN: Se mantiene un solo Text para mostrar la lista de usuarios al final
         Text(
             text = dataUser.value, fontSize = 20.sp
         )
     }
 }
+
+// Las demás funciones (crearDatabase, getUsers, etc.) permanecen igual.
 
 @Composable
 fun crearDatabase(context: Context): UserDatabase {
@@ -104,23 +124,30 @@ fun crearDatabase(context: Context): UserDatabase {
 
 suspend fun getUsers(dao: UserDao): String {
     var rpta: String = ""
-    //LaunchedEffect(Unit) {
     val users = dao.getAll()
-    users.forEach { user ->
-        val fila = user.firstName + " - " + user.lastName + "\n"
-        rpta += fila
+    if (users.isEmpty()) {
+        rpta = "No hay usuarios registrados."
+    } else {
+        users.forEach { user ->
+            val fila = "${user.uid}: ${user.firstName} - ${user.lastName}\n"
+            rpta += fila
+        }
     }
-    //}
     return rpta
 }
 
-suspend fun AgregarUsuario(user: User, dao:UserDao): Unit {
-    //LaunchedEffect(Unit) {
+suspend fun AgregarUsuario(user: User, dao: UserDao) {
     try {
         dao.insert(user)
+    } catch (e: Exception) {
+        Log.e("User", "Error: insert: ${e.message}")
     }
-    catch (e: Exception) {
-        Log.e("User","Error: insert: ${e.message}")
+}
+
+suspend fun EliminarUltimoUsuario(dao: UserDao) {
+    try {
+        dao.deleteLast()
+    } catch (e: Exception) {
+        Log.e("User", "Error: deleteLast: ${e.message}")
     }
-    //}
 }
